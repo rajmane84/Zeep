@@ -1,11 +1,24 @@
 "use client";
 import { useState } from "react";
-import { CaretDownIcon, CaretUpIcon, CheveronDown, MoonIcon, SunIcon } from "./icons";
+import {
+  CaretDownIcon,
+  CaretUpIcon,
+  CheveronDown,
+  MoonIcon,
+  SunIcon,
+} from "./icons";
 import { useRouter } from "next/navigation";
-import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "motion/react";
+import {
+  motion,
+  useScroll,
+  useMotionValueEvent,
+  AnimatePresence,
+} from "motion/react";
 import clsx from "clsx";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+import { SignedIn, SignedOut, useAuth, UserButton } from "@clerk/nextjs";
+import { SignupBtn, SigninBtn } from "./authentication";
 
 type NavbarSubOption = {
   name: string;
@@ -29,7 +42,7 @@ const navbarOptions: NavbarOption[] = [
         name: "zep",
         description:
           "Freely utilize virtual Spaces with our convenient platform.",
-        logo: "/vercel.svg",
+        logo: "/globe.svg",
       },
     ],
   },
@@ -39,27 +52,27 @@ const navbarOptions: NavbarOption[] = [
     options: [
       {
         name: "Official Guide",
-        logo: "/vercel.svg",
+        logo: "/globe.svg",
       },
       {
         name: "Announcement",
-        logo: "/vercel.svg",
+        logo: "/globe.svg",
       },
       {
         name: "Update Notes",
-        logo: "/vercel.svg",
+        logo: "/globe.svg",
       },
       {
         name: "FAQ",
-        logo: "/vercel.svg",
+        logo: "/globe.svg",
       },
       {
         name: "Blog",
-        logo: "/vercel.svg",
+        logo: "/globe.svg",
       },
       {
         name: "Asset store",
-        logo: "/vercel.svg",
+        logo: "/globe.svg",
       },
     ],
   },
@@ -80,11 +93,21 @@ const Navbar = () => {
   const [isProfileOptionsOpen, setIsProfileOptionsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
-  const {theme, setTheme} = useTheme();
+  const { theme, setTheme } = useTheme();
+  const { isSignedIn } = useAuth();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > 2);
   });
+
+  // Some issue is there in this
+  const handleRedirect = () => {
+    if(!isSignedIn){
+      router.push("/")
+    }
+
+    router.push("/home/spaces")
+  }
 
   return (
     <motion.div
@@ -102,7 +125,7 @@ const Navbar = () => {
             height={30}
             width={30}
             className="size-18 cursor-pointer"
-            onClick={() => router.push("/")}
+            onClick={handleRedirect}
           />
           <div className="flex items-center gap-4">
             {navbarOptions.map((option) => (
@@ -111,48 +134,60 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="flex h-full items-center gap-6">
-          <div
-            onClick={() => setIsProfileOptionsOpen(!isProfileOptionsOpen)}
-            className="flex h-full cursor-pointer items-center gap-2"
-          >
-            <span className="text-sm text-neutral-500">rajmane84</span>
-            {!isProfileOptionsOpen ? (
-              <CaretDownIcon className="size-3 fill-neutral-400" />
-            ) : (
-              <CaretUpIcon className="size-3 fill-neutral-400" />
-            )}
-          </div>
-
-          <div
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="cursor-pointer"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {theme === "dark" ? (
-                <motion.div
-                  key="moon"
-                  initial={{ opacity: 0, rotate: -90, scale: 0.8 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: 90, scale: 0.8 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <MoonIcon className="size-4" />
-                </motion.div>
+        {isSignedIn ? (
+          <div className="flex h-full items-center gap-6">
+            <div
+              onClick={() => setIsProfileOptionsOpen(!isProfileOptionsOpen)}
+              className="flex h-full cursor-pointer items-center gap-2"
+            >
+              <span className="text-sm text-neutral-500">rajmane84</span>
+              {!isProfileOptionsOpen ? (
+                <CaretDownIcon className="size-3 fill-neutral-400" />
               ) : (
-                <motion.div
-                  key="sun"
-                  initial={{ opacity: 0, rotate: 90, scale: 0.8 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: -90, scale: 0.8 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <SunIcon className="size-4" />
-                </motion.div>
+                <CaretUpIcon className="size-3 fill-neutral-400" />
               )}
-            </AnimatePresence>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+            </div>
+
+            <div
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="cursor-pointer"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {theme === "dark" ? (
+                  <motion.div
+                    key="moon"
+                    initial={{ opacity: 0, rotate: -90, scale: 0.8 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: 90, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <MoonIcon className="size-4" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="sun"
+                    initial={{ opacity: 0, rotate: 90, scale: 0.8 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: -90, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SunIcon className="size-4" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex h-full items-center gap-6">
+            <SignedOut>
+              <SigninBtn />
+              <SignupBtn />
+            </SignedOut>
+          </div>
+        )}
       </div>
     </motion.div>
   );

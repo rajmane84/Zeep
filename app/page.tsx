@@ -1,9 +1,16 @@
+"use client";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+
 const Home = () => {
-  return (
-    <div>
-      Home page
-    </div>
-  );
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
+
+  if (isSignedIn) {
+    router.push("/home/spaces");
+  }
+
+  return <div>Landing Page</div>;
 };
 
 export default Home;
