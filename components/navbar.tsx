@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   CaretDownIcon,
   CaretUpIcon,
@@ -19,11 +19,20 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import { SignedIn, SignedOut, useAuth, UserButton } from "@clerk/nextjs";
 import { SignupBtn, SigninBtn } from "./authentication";
+import {
+  IconInfoCircle,
+  IconBook,
+  IconBell,
+  IconNotes,
+  IconHelpCircle,
+  IconWriting,
+  IconShoppingCart,
+} from "@tabler/icons-react";
 
 type NavbarSubOption = {
   name: string;
   description?: string;
-  logo: string;
+  logo: React.ReactNode;
 };
 
 type NavbarOption = {
@@ -42,7 +51,7 @@ const navbarOptions: NavbarOption[] = [
         name: "zep",
         description:
           "Freely utilize virtual Spaces with our convenient platform.",
-        logo: "/globe.svg",
+        logo: <IconInfoCircle className="size-12 text-neutral-400" />, // Represents information/about
       },
     ],
   },
@@ -52,27 +61,27 @@ const navbarOptions: NavbarOption[] = [
     options: [
       {
         name: "Official Guide",
-        logo: "/globe.svg",
+        logo: <IconBook className="text-neutral-400" />, // Guide or documentation
       },
       {
         name: "Announcement",
-        logo: "/globe.svg",
+        logo: <IconBell className="text-neutral-400" />, // Notification or announcement
       },
       {
         name: "Update Notes",
-        logo: "/globe.svg",
+        logo: <IconNotes className="text-neutral-400" />, // Release/update notes
       },
       {
         name: "FAQ",
-        logo: "/globe.svg",
+        logo: <IconHelpCircle className="text-neutral-400" />, // Question mark for FAQs
       },
       {
         name: "Blog",
-        logo: "/globe.svg",
+        logo: <IconWriting className="text-neutral-400" />, // Represents writing/blog posts
       },
       {
         name: "Asset store",
-        logo: "/globe.svg",
+        logo: <IconShoppingCart className="text-neutral-400" />, // Store or marketplace
       },
     ],
   },
@@ -102,31 +111,41 @@ const Navbar = () => {
 
   // Some issue is there in this
   const handleRedirect = () => {
-    if(!isSignedIn){
-      router.push("/")
+    if (!isSignedIn) {
+      router.push("/");
     }
 
-    router.push("/home/spaces")
-  }
+    router.push("/home/spaces");
+  };
 
   return (
     <motion.div
       className={clsx(
-        "fixed inset-x-0 top-0 z-50 h-16 w-full bg-white/80 text-black backdrop-blur-md transition-all duration-300",
+        "fixed inset-x-0 top-0 z-50 h-16 w-full bg-white text-black transition-all duration-300",
         isScrolled ? "shadow-md" : "shadow-none",
       )}
       transition={{ duration: 0.3 }}
     >
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between">
         <div className="flex h-full items-center gap-8">
-          <Image
-            src={"/next.svg"}
-            alt="zep_logo"
-            height={30}
-            width={30}
-            className="size-18 cursor-pointer"
-            onClick={handleRedirect}
-          />
+          <div className="flex items-center gap-2">
+            <Image
+              src="/logo-light-1.png"
+              alt="zep_logo"
+              height={56}
+              width={56}
+              className="size-14 cursor-pointer object-contain"
+              onClick={handleRedirect}
+            />
+            <Image
+              src="/logo-light-2.png"
+              alt="zep_logo"
+              height={40}
+              width={140}
+              className="size-18 cursor-pointer object-contain"
+              onClick={handleRedirect}
+            />
+          </div>
           <div className="flex items-center gap-4">
             {navbarOptions.map((option) => (
               <NavbarButton key={option.name} option={option} />
@@ -253,13 +272,14 @@ const NavbarButton = ({ option }: { option: NavbarOption }) => {
               onClick={() => alert(`Clicked on ${sub.name}`)}
               className="flex w-full cursor-pointer items-start gap-3 rounded-md px-3 py-2 text-left hover:bg-blue-100/20"
             >
-              <Image
+              {/* <Image
                 src={sub.logo}
                 alt={sub.name}
                 width={20}
                 height={20}
                 className="rounded-sm"
-              />
+              /> */}
+              {sub.logo}
               <div className="flex flex-col">
                 <span className="text-sm font-medium">{sub.name}</span>
                 {sub.description && (

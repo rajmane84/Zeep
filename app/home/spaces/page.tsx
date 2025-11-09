@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,6 +7,8 @@ import {
   PlusIcon,
   SearchIcon,
 } from "@/components/icons";
+import { CarouselCard, RoomCard } from "@/components/home";
+import Footer from "@/components/home/footer";
 import clsx from "clsx";
 
 export interface GameItem {
@@ -70,14 +72,15 @@ const games: GameItem[] = [
 ];
 
 const HomePage = () => {
-  const [current, setCurrent] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const visibleCount = 2;
+  const autoplayDelay = 3000;
 
   const totalPages = Math.ceil(games.length / visibleCount);
 
   const nextSlide = () => {
-    setCurrent((prev) => {
-      // If we are at the last set of cards, loop back to 0
+    setCurrentIndex((prev) => {
       if (prev + visibleCount >= games.length) {
         return 0;
       }
@@ -86,127 +89,173 @@ const HomePage = () => {
   };
 
   const prevSlide = () => {
-    setCurrent((prev) => {
-      // If the previous index is out of bounds (< 0)
+    setCurrentIndex((prev) => {
       if (prev - visibleCount < 0) {
-        // Go to the last "page"
-        // Math.floor((games.length - 1) / visibleCount) * visibleCount
-        // finds the starting index of the last set of visible cards.
         return Math.floor((games.length - 1) / visibleCount) * visibleCount;
       }
-      // Otherwise, move to the previous set
       return prev - visibleCount;
     });
   };
 
-  return (
-    <div className="flex flex-col justify-center pt-8">
-      <div className="mb-4 w-full">
-        <div className="scrollbar-hide relative flex w-full max-w-full items-center gap-4 overflow-x-scroll">
-          <div className="pointer-events-none fixed top-0 left-0 z-100 h-full w-60 bg-linear-to-r from-white to-transparent"></div>
-          <div className="pointer-events-none fixed top-0 right-0 z-100 h-full w-60 bg-linear-to-l from-white to-transparent"></div>
+  // Autoplay functionality
+  useEffect(() => {
+    if (!isHovered) {
+      const interval = setInterval(() => {
+        nextSlide();
+      }, autoplayDelay);
 
-          {games.map((game) => (
-            <CarouselCard key={game.id} game={game} />
+      return () => clearInterval(interval);
+    }
+  }, [currentIndex, isHovered]);
+
+  const getVisibleGames = () => {
+    const visible = [];
+
+    // Add previous card (faded)
+    const prevIndex =
+      currentIndex - 1 < 0 ? games.length - 1 : currentIndex - 1;
+    visible.push({
+      ...games[prevIndex],
+      isFaded: true,
+      key: `prev-${prevIndex}`,
+    });
+
+    // Add current visible cards
+    for (let i = 0; i < visibleCount; i++) {
+      const index = (currentIndex + i) % games.length;
+      visible.push({
+        ...games[index],
+        isFaded: false,
+        key: `current-${index}`,
+      });
+    }
+
+    // Add next card (faded)
+    const nextIndex = (currentIndex + visibleCount) % games.length;
+    visible.push({
+      ...games[nextIndex],
+      isFaded: true,
+      key: `next-${nextIndex}`,
+    });
+
+    return visible;
+  };
+
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
+
+  const rooms = [
+    { id: "1", name: "My Space", thumbnail: "/carousel/the-sandbox-game.png" },
+    {
+      id: "2",
+      name: "Chill Zone",
+      thumbnail: "/carousel/the-sandbox-game.png",
+    },
+    { id: "3", name: "Work Hub", thumbnail: "/carousel/the-sandbox-game.png" },
+  ];
+
+  return (
+    <div className="bg-background min-h-screen">
+      <div className="flex flex-col justify-center space-y-4 pt-8">
+        <div className="mb-4 w-full">
+          <div
+            className="relative flex w-full items-center justify-center overflow-hidden py-4"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            {/* Gradient overlays for fade effect */}
+            <div className="pointer-events-none absolute top-0 left-0 z-50 h-full w-80 bg-linear-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute top-0 right-0 z-50 h-full w-80 bg-linear-to-l from-white to-transparent" />
+
+            <div className="flex gap-6 transition-transform duration-700 ease-in-out">
+              {getVisibleGames().map((game) => (
+                <CarouselCard
+                  key={game.key}
+                  game={game}
+                  isFaded={game.isFaded}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Carousel controls */}
+          <div className="mt-4 flex w-full items-center justify-center gap-4">
+            <div
+              onClick={prevSlide}
+              className="flex size-7 cursor-pointer items-center justify-center rounded-full border border-neutral-200/80 hover:bg-blue-100/25"
+            >
+              <ChevronLeft className="size-5" />
+            </div>
+            <div className="flex items-center justify-center rounded-full border border-neutral-200/80 px-5 py-1 text-sm">
+              {Math.floor(currentIndex / visibleCount) + 1}/{totalPages}
+            </div>
+            <div
+              onClick={nextSlide}
+              className="flex size-7 cursor-pointer items-center justify-center rounded-full border border-neutral-200/80 hover:bg-blue-100/25"
+            >
+              <ChevronRight className="size-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-semibold text-black">Recent</span>
+              <div className="h-6 w-px bg-neutral-300"></div>
+              <span className="text-lg font-semibold text-neutral-300">
+                My Spaces
+              </span>
+            </div>
+            <div className="relative flex items-center gap-4">
+              <input
+                type="text"
+                placeholder="Search Spaces"
+                className="rounded-lg border border-neutral-300 px-4 py-1 pl-10 focus:ring-1 focus:ring-[#6b66fc] focus:outline-none"
+              />
+              <SearchIcon className="absolute left-2.5 size-5 text-neutral-500" />
+              <button
+                className={clsx(
+                  "cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium text-[#6b66fc] transition-all duration-300",
+                  "border-neutral-200 bg-blue-100/25 hover:border-neutral-200/50 hover:bg-blue-200/50",
+                  "flex items-center gap-2",
+                )}
+              >
+                <EnterIcon className="size-5" />
+                Enter with Code
+              </button>
+              <button
+                className={clsx(
+                  "cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium text-white transition-all duration-300",
+                  "border-[#8581ff] bg-[#6C63FF] hover:text-shadow-xs",
+                  "from-[#6556F3] to-[#5D7CFF] hover:bg-linear-to-tr",
+                  "flex items-center gap-2",
+                )}
+              >
+                <PlusIcon className="size-5" />
+                Create Space
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto mb-8 flex max-h-[500px] w-full max-w-6xl flex-wrap gap-4">
+          {rooms.map((room) => (
+            <RoomCard
+              key={room.id}
+              id={room.id}
+              name={room.name}
+              thumbnail={room.thumbnail}
+              isOpen={openCardId === room.id}
+              onToggle={() =>
+                setOpenCardId((prev) => (prev === room.id ? null : room.id))
+              }
+            />
           ))}
         </div>
-
-        {/* Carousel controls */}
-        <div className="mt-4 flex w-full items-center justify-center gap-4">
-          <div
-            onClick={prevSlide}
-            className="flex size-7 cursor-pointer items-center justify-center rounded-full border border-neutral-200/80 hover:bg-blue-100/25"
-          >
-            <ChevronLeft className="size-5" />
-          </div>
-          <div className="flex items-center justify-center rounded-full border border-neutral-200/80 px-5 py-1 text-sm">
-            {Math.floor(current / visibleCount) + 1}/{totalPages}
-          </div>
-          <div
-            onClick={nextSlide}
-            className="flex size-7 cursor-pointer items-center justify-center rounded-full border border-neutral-200/80 hover:bg-blue-100/25"
-          >
-            <ChevronRight className="size-5" />
-          </div>
-        </div>
-      </div>
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-semibold text-black">Recent</span>
-            <div className="h-6 w-px bg-neutral-300"></div>
-            <span className="text-lg font-semibold text-neutral-300">
-              My Spaces
-            </span>
-          </div>
-          <div className="relative flex items-center gap-4">
-            <input
-              type="text"
-              placeholder="Search Spaces"
-              className="rounded-lg border border-neutral-300 px-4 py-1 pl-10 focus:ring-1 focus:ring-[#6b66fc] focus:outline-none"
-            />
-            <SearchIcon className="absolute left-2.5 size-5 text-neutral-500" />
-            <button
-              className={clsx(
-                "cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium text-[#6b66fc] transition-all duration-300",
-                "border-neutral-200 bg-blue-100/25 hover:border-neutral-200/50 hover:bg-blue-200/50",
-                "flex items-center gap-2",
-              )}
-            >
-              <EnterIcon className="size-5" />
-              Enter with Code
-            </button>
-            <button
-              className={clsx(
-                "cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium text-white transition-all duration-300",
-                "border-[#8581ff] bg-[#6C63FF] hover:text-shadow-xs",
-                "from-[#6556F3] to-[#5D7CFF] hover:bg-linear-to-tr",
-                "flex items-center gap-2",
-              )}
-            >
-              <PlusIcon className="size-5" />
-              Create Space
-            </button>
-          </div>
-        </div>
+        <Footer />
       </div>
     </div>
   );
 };
 
 export default HomePage;
-
-const CarouselCard = ({ game }: { game: GameItem }) => {
-  return (
-    <div className="relative flex h-[225px] w-[600px] shrink-0 overflow-hidden rounded-md">
-      {/* Background image: Using the dynamic game.img */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${game.img})` }}
-      />
-
-      {/* Solid blue base overlay */}
-      <div className="absolute top-0 left-0 z-10 h-full w-[45%] bg-blue-500" />
-
-      {/* Gradient overlay to smooth the edge */}
-      <div className="absolute top-0 left-[45%] z-20 h-full w-[15%] bg-linear-to-r from-blue-500 to-transparent" />
-
-      {/* Text layer */}
-      <div className="absolute inset-0 z-30 flex flex-col justify-between px-3 py-5">
-        <div className="flex items-center gap-2 text-xs text-white">
-          <div className="rounded-full bg-neutral-100/50 px-2 py-1">
-            {game.tag1}
-          </div>
-          <div className="rounded-full bg-neutral-100/50 px-2 py-1">
-            {game.tag2}
-          </div>
-        </div>
-
-        <div className="flex flex-col items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold text-white">{game.title}</h1>
-          <p className="max-w-[45%] text-xs text-neutral-100">{game.desc}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
